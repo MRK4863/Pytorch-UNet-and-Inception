@@ -13,22 +13,23 @@ class InceptionUNet(nn.Module):
         self.n_classes = n_classes
         self.bilinear = bilinear
 
-        self.block1 = InceptionConv(8, 4)
-        self.block2 = InceptionConv(16, 8)
-        self.block3 = InceptionConv(32, 16)
-        self.block4 = InceptionConv(64, 16)
+        self.block1 = InceptionConv(64, 32)
+        self.block2 = InceptionConv(128, 64)
+        self.block3 = InceptionConv(256, 128)
+        self.block4 = InceptionConv(512, 128)
 
-        self.inc = DoubleConv(n_channels, 8)
-        self.down1 = Down(8, 16)
-        self.down2 = Down(16, 32)
-        self.down3 = Down(32, 64)
+        self.inc = DoubleConv(n_channels, 64)
+        self.down1 = Down(64, 128)
+        self.down2 = Down(128, 256)
+        self.down3 = Down(256, 512)
         factor = 2 if bilinear else 1
-        self.down4 = Down(64, 128 // factor)
-        self.up1 = UpInception(128+64, 64 // factor, bilinear)
-        self.up2 = UpInception(128, 32 // factor, bilinear)
-        self.up3 = UpInception(64, 16 // factor, bilinear)
-        self.up4 = UpInception(32, 8, bilinear)
-        self.outc = OutConv(8, n_classes)
+        self.down4 = Down(512, 1024 // factor)
+
+        self.up1 = UpInception(1024+512, 256 // factor, bilinear)
+        self.up2 = UpInception(896, 128 // factor, bilinear)
+        self.up3 = UpInception(448, 32 // factor, bilinear)
+        self.up4 = UpInception(208, 16, bilinear)
+        self.outc = OutConv(16, n_classes)
 
 
     def forward(self, x):
