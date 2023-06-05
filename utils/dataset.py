@@ -18,10 +18,14 @@ class BasicDataset(Dataset):
 
         self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
                     if not file.startswith('.')]
+        self.image_paths = []
+        for id in self.ids:
+            file_list = listdir(imgs_dir + id)
+            self.image_paths += [ id +"/"+ filename for filename in file_list]
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
-        return len(self.ids)
+        return len(self.image_paths)
 
     @classmethod
     def preprocess(cls, pil_img, scale):
@@ -42,17 +46,28 @@ class BasicDataset(Dataset):
 
         return img_trans
 
-    def __getitem__(self, i):
-        idx = self.ids[i]
-        mask_file = glob(self.masks_dir + idx + self.mask_suffix + '.*')
-        img_file = glob(self.imgs_dir + idx + '.*')
+    def __getitem__(self, idx):
+        img = Image.open(self.imgs_dir + self.image_paths[idx])
+        
+        pos =  self.image_paths[idx].find("/")
+        filename = self.image_paths[idx][pos+1:]
+        filename_mask = ""
+        if "Cr" in filename:
+            filename_mask = filename.replace("Cr", "crazing")
+        elif "In" in filename:
+            filename_mask = filename.replace("In", "inclusion")
+        elif "Pa" in filename:
+            filename_mask = filename.replace("Pa", "patches")
+        elif "PS" in filename:
+            filename_mask = filename.replace("PS", "pitted_surface")
+        elif "RS" in filename:
+            filename_mask = filename.replace("RS", "rolled-in_scale")
+        elif "Sc" in filename:
+            filename_mask = filename.replace("Sc", "scratches")
 
-        assert len(mask_file) == 1, \
-            f'Either no mask or multiple masks found for the ID {idx}: {mask_file}'
-        assert len(img_file) == 1, \
-            f'Either no image or multiple images found for the ID {idx}: {img_file}'
-        mask = Image.open(mask_file[0])
-        img = Image.open(img_file[0])
+        filename_mask = filename_mask.replace("bmp", "png")
+        mask = Image.open(self.masks_dir + filename_mask)
+
 
         assert img.size == mask.size, \
             f'Image and mask {idx} should be the same size, but are {img.size} and {mask.size}'

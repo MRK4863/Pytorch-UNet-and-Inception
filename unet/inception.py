@@ -52,5 +52,6 @@ class InceptionUNet(nn.Module):
         # x = torch.cat(x, block2)
         x = self.up4(x, x1, block1)
         # x = torch.cat(x, block1)
-        logits = self.outc(x)
-        return logits
+        x = self.outc(x)
+        x = torch.sigmoid(x)
+        return x
