@@ -117,7 +117,18 @@ class Up(nn.Module):
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
 
+class DownInception(nn.Module):
+    """Downscaling with maxpool then double conv"""
 
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.maxpool_conv = nn.Sequential(
+            nn.MaxPool2d(1),
+            InceptionConv(in_channels, out_channels)
+        )
+
+    def forward(self, x):
+        return self.maxpool_conv(x)
 
 class UpInception(nn.Module):
     """Upscaling then double conv"""
@@ -147,7 +158,6 @@ class UpInception(nn.Module):
         # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
         x = torch.cat([x3, x2, x1], dim=1)
         return self.conv(x)
-
 
 class OutConv(nn.Module):
     def __init__(self, in_channels, out_channels):
